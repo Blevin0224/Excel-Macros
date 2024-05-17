@@ -1,0 +1,77 @@
+'This Must go at the top of your module. It's used to set IE as the active window
+Public Declare PtrSafe Function SetForegroundWindow Lib "user32" (ByVal HWND As Long) As Long
+
+____________________________________________________________________________________________________________________
+
+Sub Automate_IE_Enter_Data()
+'This will load a webpage in IE
+    Dim i As Long
+    Dim URL As String
+    Dim IE As Object
+    Dim objElement As Object
+    Dim objCollection As Object
+    Dim HWNDSrc As Long
+    Dim LMonth, LDay, LYear As Long
+    Dim RMonth, RDay, RYear As Long
+    Dim FMonth, FDay, FYear As Long
+    Dim Principal As Single
+    Dim RowBeg, RowEnd As Long
+    
+    RowBeg = InputBox("Enter the first row number for the participant you'd like to calculate.")
+    RowEnd = InputBox("Enter the last row number for the participant you'd like to calculate.")
+    
+    'Create InternetExplorer Object
+    Set IE = CreateObject("InternetExplorer.Application")
+ 
+    'Set IE.Visible = True to make IE visible, or False for IE to run in the background
+    IE.Visible = True
+ 
+    'Define URL
+    URL = "https://www.askebsa.dol.gov/vfcpcalculator/webcalculator.aspx"
+    
+    IE.Navigate URL
+    Do While IE.readystate = 4: DoEvents: Loop
+    Do Until IE.readystate = 4: DoEvents: Loop
+    
+    'Get Window ID for IE so we can set it as activate window
+    HWNDSrc = IE.HWND
+    'Set IE as Active Window
+    
+    SetForegroundWindow HWNDSrc
+        
+    For counter = RowBeg To RowEnd + 1
+        
+        Application.Wait (Now + TimeValue("0:00:03"))
+        'Pulls the values from the selected cells on the do not touch sheet
+        Principal = Round(Sheets("Do Not Touch!").Cells(counter, 2), 2)
+        LMonth = Sheets("Do Not Touch!").Cells(counter, 3)
+        LDay = Sheets("Do Not Touch!").Cells(counter, 4)
+        LYear = Sheets("Do Not Touch!").Cells(counter, 5)
+        RMonth = Sheets("Do Not Touch!").Cells(counter, 6)
+        RDay = Sheets("Do Not Touch!").Cells(counter, 7)
+        RYear = Sheets("Do Not Touch!").Cells(counter, 8)
+        FMonth = Sheets("Do Not Touch!").Cells(counter, 9)
+        FDay = Sheets("Do Not Touch!").Cells(counter, 10)
+        FYear = Sheets("Do Not Touch!").Cells(counter, 11)
+        On Error GoTo foo
+        'Find & Fill Out Input Box
+        IE.Document.getelementbyid("_ctl0_MainContent_txtPrincipal").Value = Principal
+        IE.Document.getelementbyid("_ctl0_MainContent_txtLossDateMonth").Value = LMonth
+        IE.Document.getelementbyid("_ctl0_MainContent_txtLossDateDay").Value = LDay
+        IE.Document.getelementbyid("_ctl0_MainContent_txtLossDateYear").Value = LYear
+        IE.Document.getelementbyid("_ctl0_MainContent_txtRecoveryDateMonth").Value = RMonth
+        IE.Document.getelementbyid("_ctl0_MainContent_txtRecoveryDateDay").Value = RDay
+        IE.Document.getelementbyid("_ctl0_MainContent_txtRecoveryDateYear").Value = RYear
+        IE.Document.getelementbyid("_ctl0_MainContent_txtFinalPaymentMonth").Value = FMonth
+        IE.Document.getelementbyid("_ctl0_MainContent_txtFinalPaymentDay").Value = FDay
+        IE.Document.getelementbyid("_ctl0_MainContent_txtFinalPaymentYear").Value = FYear
+        'clicks the button for the lost earnings
+        IE.Document.getelementbyid("_ctl0_MainContent_cmdCalculate").Click
+    Next counter
+foo:
+    'clicks the printable results button
+    IE.Document.getelementbyid("_ctl0_MainContent_cmdResults").Click
+    Application.Wait (Now + TimeValue("0:00:03"))
+    'automatically opens the print screen
+    IE.ExecWB 6, 1
+End Sub
